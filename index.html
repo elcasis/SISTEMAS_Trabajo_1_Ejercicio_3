@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calculadora del Algoritmo del Banquero</title>
+  <title>Algoritmo del Banquero</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -147,6 +147,11 @@
       font-weight: 600;
     }
 
+    input[type="number"]::placeholder {
+      color: #475569;
+      font-weight: 400;
+    }
+
     input[type="number"]:focus, select:focus {
       outline: 2px solid var(--primary);
       border-color: transparent;
@@ -237,7 +242,6 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 1.25rem;
-      margin-bottom: 1.75rem;
       align-items: stretch;
     }
 
@@ -342,7 +346,7 @@
       border-top: 2px solid var(--border);
     }
 
-    /* Códigos de color cuando excede recursos o estados de celda */
+    /* Códigos de color */
     .cell-danger,
     td.cell-danger input {
       background-color: var(--danger-bg) !important;
@@ -360,6 +364,11 @@
     .cell-ready {
       background-color: var(--success-bg);
       color: #86efac;
+    }
+
+    .cell-pending {
+      color: var(--text-muted);
+      font-weight: 500;
     }
 
     .error-banner {
@@ -381,124 +390,14 @@
       margin-top: 0.35rem;
       margin-left: 1.25rem;
     }
-
-    /* Resultados y Simulador de Peticiones */
-    .bottom-grid {
-      display: grid;
-      grid-template-columns: 1.3fr 1fr;
-      gap: 1.25rem;
-    }
-
-    @media (max-width: 960px) {
-      .bottom-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--surface-alt);
-      border-radius: var(--radius);
-      padding: 1.35rem;
-    }
-
-    .panel h3 {
-      font-size: 1.1rem;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .status-badge {
-      font-size: 0.82rem;
-      padding: 0.25rem 0.7rem;
-      border-radius: 99px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .status-safe {
-      background: var(--success-bg);
-      color: #4ade80;
-      border: 1px solid var(--success);
-    }
-
-    .status-unsafe {
-      background: var(--danger-bg);
-      color: #f87171;
-      border: 1px solid var(--danger);
-    }
-
-    .sequence-flow {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin: 0.85rem 0 1.15rem;
-    }
-
-    .seq-node {
-      background: var(--bg);
-      border: 1px solid var(--success);
-      color: #4ade80;
-      font-weight: 700;
-      padding: 0.4rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.95rem;
-    }
-
-    .seq-arrow {
-      color: var(--text-muted);
-      font-weight: 700;
-    }
-
-    .steps-log {
-      display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
-      max-height: 290px;
-      overflow-y: auto;
-      padding-right: 0.3rem;
-    }
-
-    .step-item {
-      background: var(--bg);
-      border-left: 3px solid var(--primary);
-      padding: 0.6rem 0.85rem;
-      border-radius: 0 6px 6px 0;
-      font-size: 0.86rem;
-    }
-
-    .step-item.step-fail {
-      border-left-color: var(--danger);
-      background: var(--danger-bg);
-    }
-
-    .req-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      align-items: flex-end;
-      margin-bottom: 1rem;
-    }
-
-    .req-result {
-      margin-top: 1rem;
-      padding: 0.9rem;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      background: var(--bg);
-      border: 1px solid var(--border);
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <div>
-        <h1>Simulador del Algoritmo del Banquero</h1>
-        <p>Introduce el número de tipos de recursos, sus unidades totales y rellena las tablas para calcular la finalización y el estado seguro</p>
+        <h1>Algoritmo del Banquero</h1>
+        <p>Configura el número de tipos de recursos y sus unidades totales, y rellena las tablas de recursos asociados y máximos</p>
       </div>
       <div>
         <button class="btn-secondary" id="btnReset">
@@ -542,11 +441,11 @@
       <strong>Código de colores:</strong>
       <span class="legend-item">
         <span class="swatch swatch-err"></span>
-        <strong>Rojo (Excede recursos del sistema):</strong> La suma asignada o el máximo de un proceso supera los recursos del sistema, o Asociado &gt; Máximo.
+        <strong>Rojo (Excede recursos del sistema):</strong> La suma de recursos asociados o el máximo de un proceso supera las unidades del sistema (o Asociado &gt; Máximo ya introducido).
       </span>
       <span class="legend-item">
         <span class="swatch swatch-warn"></span>
-        <strong>Ámbar (En espera):</strong> La necesidad para finalizar supera los recursos disponibles actuales.
+        <strong>Ámbar (En espera):</strong> La necesidad para finalizar supera los recursos disponibles libres actuales.
       </span>
       <span class="legend-item">
         <span class="swatch swatch-ok"></span>
@@ -592,95 +491,60 @@
         </div>
       </div>
     </section>
-
-    <!-- Evaluación de Estado Seguro y Peticiones Adicionales -->
-    <section class="bottom-grid">
-      <div class="panel">
-        <h3>
-          <span>Estado del Sistema</span>
-          <span id="safetyBadge" class="status-badge">Pendiente</span>
-        </h3>
-        <div id="safetySummary"></div>
-        <div id="sequenceContainer" class="sequence-flow"></div>
-        <div id="stepsLog" class="steps-log"></div>
-      </div>
-
-      <div class="panel">
-        <h3>Simulador de Petición Adicional</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.9rem;">
-          Prueba a solicitar unidades adicionales para cualquier proceso y verifica si sería seguro concederlas.
-        </p>
-
-        <div class="req-controls">
-          <div class="field">
-            <label for="reqProcess">Proceso</label>
-            <select id="reqProcess" style="width: 90px;"></select>
-          </div>
-          <div id="reqInputsContainer" class="form-row"></div>
-        </div>
-        <div class="form-row">
-          <button class="btn-primary" id="btnTestRequest">Comprobar si es seguro</button>
-          <button class="btn-secondary" id="btnApplyRequest" title="Suma esta petición a la tabla de Recursos Asociados">Aplicar a la tabla</button>
-        </div>
-
-        <div id="reqResultBox" class="req-result">
-          Introduce las unidades solicitadas arriba y pulsa "Comprobar si es seguro".
-        </div>
-      </div>
-    </section>
   </div>
 
   <script>
-    // Todo inicializado a cero para que el alumno introduzca sus propios datos
     const state = {
       numResources: 3,
       numProcesses: 4,
       startIndex: 0,
-      totalResources: [0, 0, 0],
+      totalResources: [null, null, null],
       alloc: [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0]
+        [null, null, null],
+        [null, null, null],
+        [null, null, null],
+        [null, null, null]
       ],
       max: [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0]
-      ],
-      reqVector: [0, 0, 0]
+        [null, null, null],
+        [null, null, null],
+        [null, null, null],
+        [null, null, null]
+      ]
     };
 
     function getResourceName(index) {
-      return String.fromCharCode(65 + index); // A, B, C, D...
+      return String.fromCharCode(65 + index);
     }
 
     function getProcessName(index) {
       return `P${index + state.startIndex}`;
     }
 
+    function parseCell(raw) {
+      if (raw === '' || raw === null || raw === undefined) return null;
+      const n = parseInt(raw, 10);
+      return isNaN(n) ? null : Math.max(0, n);
+    }
+
     function syncDimensions() {
-      while (state.totalResources.length < state.numResources) state.totalResources.push(0);
+      while (state.totalResources.length < state.numResources) state.totalResources.push(null);
       state.totalResources.length = state.numResources;
 
-      while (state.reqVector.length < state.numResources) state.reqVector.push(0);
-      state.reqVector.length = state.numResources;
-
       while (state.alloc.length < state.numProcesses) {
-        state.alloc.push(new Array(state.numResources).fill(0));
+        state.alloc.push(new Array(state.numResources).fill(null));
       }
       state.alloc.length = state.numProcesses;
 
       while (state.max.length < state.numProcesses) {
-        state.max.push(new Array(state.numResources).fill(0));
+        state.max.push(new Array(state.numResources).fill(null));
       }
       state.max.length = state.numProcesses;
 
       for (let i = 0; i < state.numProcesses; i++) {
-        while (state.alloc[i].length < state.numResources) state.alloc[i].push(0);
+        while (state.alloc[i].length < state.numResources) state.alloc[i].push(null);
         state.alloc[i].length = state.numResources;
-        while (state.max[i].length < state.numResources) state.max[i].push(0);
+        while (state.max[i].length < state.numResources) state.max[i].push(null);
         state.max[i].length = state.numResources;
       }
     }
@@ -693,12 +557,13 @@
       capContainer.innerHTML = '';
       for (let j = 0; j < state.numResources; j++) {
         const resName = getResourceName(j);
+        const valStr = state.totalResources[j] !== null ? state.totalResources[j] : '';
         const badge = document.createElement('div');
         badge.className = 'cap-badge';
         badge.id = `cap-badge-${j}`;
         badge.innerHTML = `
           <span class="res-title">Recurso ${resName}</span>
-          <input type="number" min="0" value="${state.totalResources[j]}" data-res="${j}" class="input-total" />
+          <input type="number" min="0" placeholder="0" value="${valStr}" data-res="${j}" class="input-total" />
           <span class="avail-pill" id="avail-pill-${j}">Disp: 0</span>
         `;
         capContainer.appendChild(badge);
@@ -707,7 +572,7 @@
       document.querySelectorAll('.input-total').forEach(input => {
         input.addEventListener('input', (e) => {
           const j = parseInt(e.target.dataset.res, 10);
-          state.totalResources[j] = Math.max(0, parseInt(e.target.value, 10) || 0);
+          state.totalResources[j] = parseCell(e.target.value);
           recalculateAndHighlight();
         });
       });
@@ -727,8 +592,9 @@
       for (let i = 0; i < state.numProcesses; i++) {
         allocBody += `<tr><td class="proc-label" data-proc-label="${i}">${getProcessName(i)}</td>`;
         for (let j = 0; j < state.numResources; j++) {
+          const valStr = state.alloc[i][j] !== null ? state.alloc[i][j] : '';
           allocBody += `<td id="alloc-cell-${i}-${j}">
-            <input type="number" min="0" value="${state.alloc[i][j]}" data-proc="${i}" data-res="${j}" class="input-alloc" />
+            <input type="number" min="0" placeholder="0" value="${valStr}" data-proc="${i}" data-res="${j}" class="input-alloc" />
           </td>`;
         }
         allocBody += '</tr>';
@@ -749,15 +615,16 @@
       for (let i = 0; i < state.numProcesses; i++) {
         maxBody += `<tr><td class="proc-label" data-proc-label="${i}">${getProcessName(i)}</td>`;
         for (let j = 0; j < state.numResources; j++) {
+          const valStr = state.max[i][j] !== null ? state.max[i][j] : '';
           maxBody += `<td id="max-cell-${i}-${j}">
-            <input type="number" min="0" value="${state.max[i][j]}" data-proc="${i}" data-res="${j}" class="input-max" />
+            <input type="number" min="0" placeholder="0" value="${valStr}" data-proc="${i}" data-res="${j}" class="input-max" />
           </td>`;
         }
         maxBody += '</tr>';
       }
       let maxFoot = '<tfoot><tr><td>Total Sistema</td>';
       for (let j = 0; j < state.numResources; j++) {
-        maxFoot += `<td id="foot-sys-${j}">${state.totalResources[j]}</td>`;
+        maxFoot += `<td id="foot-sys-${j}">0</td>`;
       }
       maxFoot += '</tr></tfoot>';
       tableMax.innerHTML = `<thead><tr>${headerCols}</tr></thead><tbody>${maxBody}</tbody>${maxFoot}`;
@@ -779,7 +646,7 @@
         inp.addEventListener('input', (e) => {
           const i = parseInt(e.target.dataset.proc, 10);
           const j = parseInt(e.target.dataset.res, 10);
-          state.alloc[i][j] = Math.max(0, parseInt(e.target.value, 10) || 0);
+          state.alloc[i][j] = parseCell(e.target.value);
           recalculateAndHighlight();
         });
       });
@@ -788,135 +655,12 @@
         inp.addEventListener('input', (e) => {
           const i = parseInt(e.target.dataset.proc, 10);
           const j = parseInt(e.target.dataset.res, 10);
-          state.max[i][j] = Math.max(0, parseInt(e.target.value, 10) || 0);
+          state.max[i][j] = parseCell(e.target.value);
           recalculateAndHighlight();
         });
       });
 
-      // Controles de solicitud adicional
-      const reqSelect = document.getElementById('reqProcess');
-      const prevSelected = parseInt(reqSelect.value, 10) || 0;
-      reqSelect.innerHTML = '';
-      for (let i = 0; i < state.numProcesses; i++) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = getProcessName(i);
-        reqSelect.appendChild(opt);
-      }
-      reqSelect.value = prevSelected < state.numProcesses ? prevSelected : 0;
-
-      const reqInputsContainer = document.getElementById('reqInputsContainer');
-      reqInputsContainer.innerHTML = '';
-      for (let j = 0; j < state.numResources; j++) {
-        const f = document.createElement('div');
-        f.className = 'field';
-        f.innerHTML = `
-          <label>+ ${getResourceName(j)}</label>
-          <input type="number" min="0" value="${state.reqVector[j]}" data-req-res="${j}" class="input-req" style="width: 65px;" />
-        `;
-        reqInputsContainer.appendChild(f);
-      }
-
-      document.querySelectorAll('.input-req').forEach(inp => {
-        inp.addEventListener('input', (e) => {
-          const j = parseInt(e.target.dataset.reqRes, 10);
-          state.reqVector[j] = Math.max(0, parseInt(e.target.value, 10) || 0);
-        });
-      });
-
       recalculateAndHighlight();
-    }
-
-    function runBankerAlgorithm(allocMatrix, maxMatrix, totalVector) {
-      const n = allocMatrix.length;
-      const m = totalVector.length;
-
-      const sumAlloc = new Array(m).fill(0);
-      for (let j = 0; j < m; j++) {
-        for (let i = 0; i < n; i++) {
-          sumAlloc[j] += allocMatrix[i][j];
-        }
-      }
-
-      const available = totalVector.map((tot, j) => tot - sumAlloc[j]);
-      const need = Array.from({ length: n }, (_, i) =>
-        Array.from({ length: m }, (__, j) => maxMatrix[i][j] - allocMatrix[i][j])
-      );
-
-      const errors = [];
-      for (let j = 0; j < m; j++) {
-        if (sumAlloc[j] > totalVector[j]) {
-          errors.push(`La suma asignada del recurso ${getResourceName(j)} (${sumAlloc[j]}) excede las unidades del sistema (${totalVector[j]}).`);
-        }
-      }
-
-      for (let i = 0; i < n; i++) {
-        for (let j = 0; j < m; j++) {
-          if (maxMatrix[i][j] > totalVector[j]) {
-            errors.push(`El proceso ${getProcessName(i)} pide un máximo de ${getResourceName(j)} (${maxMatrix[i][j]}) que excede los recursos del sistema (${totalVector[j]}).`);
-          }
-          if (allocMatrix[i][j] > maxMatrix[i][j]) {
-            errors.push(`El proceso ${getProcessName(i)} tiene más recursos asociados de ${getResourceName(j)} (${allocMatrix[i][j]}) que su máximo (${maxMatrix[i][j]}).`);
-          }
-        }
-      }
-
-      if (errors.length > 0) {
-        return {
-          valid: false,
-          safe: false,
-          errors,
-          sumAlloc,
-          available,
-          need,
-          sequence: [],
-          steps: []
-        };
-      }
-
-      const work = [...available];
-      const finish = new Array(n).fill(false);
-      const sequence = [];
-      const steps = [];
-
-      let progress = true;
-      while (sequence.length < n && progress) {
-        progress = false;
-        for (let i = 0; i < n; i++) {
-          if (!finish[i]) {
-            const canRun = need[i].every((val, j) => val <= work[j]);
-            if (canRun) {
-              const beforeWork = [...work];
-              for (let j = 0; j < m; j++) {
-                work[j] += allocMatrix[i][j];
-              }
-              finish[i] = true;
-              sequence.push(i);
-              steps.push({
-                proc: i,
-                need: [...need[i]],
-                beforeWork,
-                released: [...allocMatrix[i]],
-                afterWork: [...work]
-              });
-              progress = true;
-            }
-          }
-        }
-      }
-
-      const safe = sequence.length === n;
-      return {
-        valid: true,
-        safe,
-        errors: [],
-        sumAlloc,
-        available,
-        need,
-        sequence,
-        steps,
-        unfinished: finish.map((f, idx) => (!f ? idx : null)).filter(x => x !== null)
-      };
     }
 
     function recalculateAndHighlight() {
@@ -925,12 +669,29 @@
         el.textContent = getProcessName(idx);
       });
 
-      const result = runBankerAlgorithm(state.alloc, state.max, state.totalResources);
+      const n = state.numProcesses;
+      const m = state.numResources;
 
-      for (let j = 0; j < state.numResources; j++) {
-        const availVal = result.available[j];
-        const sumVal = result.sumAlloc[j];
-        const totVal = state.totalResources[j];
+      const totalVec = state.totalResources.map(v => v ?? 0);
+      const allocNum = state.alloc.map(row => row.map(v => v ?? 0));
+      const maxNum = state.max.map(row => row.map(v => v ?? 0));
+
+      const sumAlloc = new Array(m).fill(0);
+      for (let j = 0; j < m; j++) {
+        for (let i = 0; i < n; i++) {
+          sumAlloc[j] += allocNum[i][j];
+        }
+      }
+
+      const available = totalVec.map((tot, j) => tot - sumAlloc[j]);
+      const errors = [];
+
+      // 1. Verificar excesos por columna respecto a los recursos del sistema
+      for (let j = 0; j < m; j++) {
+        const totSet = state.totalResources[j] !== null;
+        const totVal = totalVec[j];
+        const sumVal = sumAlloc[j];
+        const availVal = available[j];
 
         const badge = document.getElementById(`cap-badge-${j}`);
         const pill = document.getElementById(`avail-pill-${j}`);
@@ -943,62 +704,98 @@
         availTd.textContent = availVal;
         sysTd.textContent = totVal;
 
-        const columnExceeded = sumVal > totVal;
+        const columnExceeded = totSet && sumVal > totVal;
         badge.classList.toggle('exceeded', columnExceeded);
         sumTd.classList.toggle('cell-danger', columnExceeded);
-        availTd.classList.toggle('cell-danger', availVal < 0);
+        availTd.classList.toggle('cell-danger', columnExceeded);
+
+        if (columnExceeded) {
+          errors.push(`La suma de recursos asociados de tipo ${getResourceName(j)} (${sumVal}) supera las unidades del sistema (${totVal}).`);
+        }
       }
 
-      for (let i = 0; i < state.numProcesses; i++) {
-        let rowHasSystemExceed = false;
+      // 2. Verificar celda por celda y calcular la tabla de finalización (Necesidad)
+      for (let i = 0; i < n; i++) {
+        let rowExceeds = false;
+        let rowMissingMax = false;
         let rowCanRunNow = true;
 
-        for (let j = 0; j < state.numResources; j++) {
-          const allocVal = state.alloc[i][j];
-          const maxVal = state.max[i][j];
-          const needVal = result.need[i][j];
-          const totVal = state.totalResources[j];
-          const availVal = result.available[j];
+        for (let j = 0; j < m; j++) {
+          const totSet = state.totalResources[j] !== null;
+          const totVal = totalVec[j];
+          const availVal = available[j];
+
+          const aVal = allocNum[i][j];
+          const mRaw = state.max[i][j];
+          const mVal = maxNum[i][j];
 
           const allocCell = document.getElementById(`alloc-cell-${i}-${j}`);
           const maxCell = document.getElementById(`max-cell-${i}-${j}`);
           const needCell = document.getElementById(`need-cell-${i}-${j}`);
 
-          needCell.textContent = needVal;
-
           allocCell.className = '';
           maxCell.className = '';
           needCell.className = 'need-cell';
 
-          const allocExceedsSys = allocVal > totVal || result.sumAlloc[j] > totVal;
-          const allocExceedsMax = allocVal > maxVal;
-          const maxExceedsSys = maxVal > totVal;
+          const allocExceedsSys = totSet && (aVal > totVal || sumAlloc[j] > totVal);
+          const maxExceedsSys = totSet && (mRaw !== null && mVal > totVal);
+
+          const maxExplicitlySet = mRaw !== null && (mVal > 0 || aVal === 0);
+          const allocExceedsMax = maxExplicitlySet && aVal > mVal;
+
+          if (totSet && aVal > totVal) {
+            errors.push(`El proceso ${getProcessName(i)} tiene ${aVal} recursos asociados de ${getResourceName(j)}, superando el total del sistema (${totVal}).`);
+          }
+          if (maxExceedsSys) {
+            errors.push(`El proceso ${getProcessName(i)} pide un máximo de ${mVal} en ${getResourceName(j)}, superando el total del sistema (${totVal}).`);
+          }
+          if (allocExceedsMax) {
+            errors.push(`El proceso ${getProcessName(i)} tiene más recursos asociados de ${getResourceName(j)} (${aVal}) que su máximo declarado (${mVal}).`);
+          }
 
           if (allocExceedsSys || allocExceedsMax) {
             allocCell.classList.add('cell-danger');
-            rowHasSystemExceed = true;
+            rowExceeds = true;
           }
           if (maxExceedsSys || allocExceedsMax) {
             maxCell.classList.add('cell-danger');
-            rowHasSystemExceed = true;
+            rowExceeds = true;
           }
 
-          if (needVal < 0 || maxExceedsSys || needVal > totVal) {
-            needCell.classList.add('cell-danger');
-            rowHasSystemExceed = true;
-            rowCanRunNow = false;
-          } else if (needVal > availVal) {
-            needCell.classList.add('cell-warning');
+          if (!maxExplicitlySet && aVal > 0) {
+            needCell.textContent = '—';
+            needCell.classList.add('cell-pending');
+            rowMissingMax = true;
             rowCanRunNow = false;
           } else {
-            needCell.classList.add('cell-ready');
+            const needVal = mVal - aVal;
+            needCell.textContent = needVal;
+
+            if (needVal < 0 || maxExceedsSys || (totSet && needVal > totVal)) {
+              needCell.classList.add('cell-danger');
+              rowExceeds = true;
+              rowCanRunNow = false;
+            } else if (!totSet) {
+              needCell.classList.add('cell-pending');
+              rowCanRunNow = false;
+            } else if (needVal > availVal) {
+              needCell.classList.add('cell-warning');
+              rowCanRunNow = false;
+            } else {
+              needCell.classList.add('cell-ready');
+            }
           }
         }
 
         const statusCell = document.getElementById(`need-status-${i}`);
-        if (rowHasSystemExceed) {
+        const allTotalsSet = state.totalResources.every(v => v !== null && v > 0);
+
+        if (rowExceeds) {
           statusCell.textContent = 'EXCEDE SISTEMA';
           statusCell.style.color = '#f87171';
+        } else if (!allTotalsSet || rowMissingMax) {
+          statusCell.textContent = 'Faltan datos';
+          statusCell.style.color = '#94a3b8';
         } else if (rowCanRunNow) {
           statusCell.textContent = 'Puede finalizar';
           statusCell.style.color = '#4ade80';
@@ -1009,152 +806,15 @@
       }
 
       const errorBanner = document.getElementById('errorBanner');
-      if (!result.valid) {
+      if (errors.length > 0) {
         errorBanner.classList.add('active');
         errorBanner.innerHTML = `
-          <strong>¡Atención! Se han excedido los recursos del sistema:</strong>
-          <ul>${result.errors.map(e => `<li>${e}</li>`).join('')}</ul>
+          <strong>¡Atención! Se han detectado excesos de recursos:</strong>
+          <ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul>
         `;
       } else {
         errorBanner.classList.remove('active');
         errorBanner.innerHTML = '';
-      }
-
-      renderSafetyPanel(result);
-    }
-
-    function formatVector(vec) {
-      return `(${vec.map((v, j) => `${getResourceName(j)}=${v}`).join(', ')})`;
-    }
-
-    function renderSafetyPanel(result) {
-      const badge = document.getElementById('safetyBadge');
-      const summary = document.getElementById('safetySummary');
-      const seqContainer = document.getElementById('sequenceContainer');
-      const stepsLog = document.getElementById('stepsLog');
-
-      seqContainer.innerHTML = '';
-      stepsLog.innerHTML = '';
-
-      if (!result.valid) {
-        badge.className = 'status-badge status-unsafe';
-        badge.textContent = 'Exceso de Recursos';
-        summary.innerHTML = `<p style="color: #fca5a5; font-size: 0.9rem;">Corrige las celdas en rojo: algún proceso o asignación supera los recursos del sistema.</p>`;
-        return;
-      }
-
-      if (result.safe) {
-        badge.className = 'status-badge status-safe';
-        badge.textContent = 'Estado Seguro';
-        summary.innerHTML = `
-          <p style="font-size: 0.9rem; color: var(--text-muted);">
-            Recursos disponibles iniciales: <strong style="color: var(--text);">${formatVector(result.available)}</strong>.
-            Secuencia segura de finalización:
-          </p>
-        `;
-
-        result.sequence.forEach((procIdx, idx) => {
-          const node = document.createElement('span');
-          node.className = 'seq-node';
-          node.textContent = getProcessName(procIdx);
-          seqContainer.appendChild(node);
-          if (idx < result.sequence.length - 1) {
-            const arrow = document.createElement('span');
-            arrow.className = 'seq-arrow';
-            arrow.textContent = '→';
-            seqContainer.appendChild(arrow);
-          }
-        });
-
-        result.steps.forEach((st, idx) => {
-          const div = document.createElement('div');
-          div.className = 'step-item';
-          div.innerHTML = `
-            <strong>Paso ${idx + 1} (${getProcessName(st.proc)}):</strong>
-            Necesita ${formatVector(st.need)} &le; Disponibles ${formatVector(st.beforeWork)}.
-            Finaliza y libera ${formatVector(st.released)} &rarr; Nuevos disponibles: <strong>${formatVector(st.afterWork)}</strong>.
-          `;
-          stepsLog.appendChild(div);
-        });
-      } else {
-        badge.className = 'status-badge status-unsafe';
-        badge.textContent = 'Estado NO Seguro';
-        const blockedNames = result.unfinished.map(i => getProcessName(i)).join(', ');
-        summary.innerHTML = `
-          <p style="font-size: 0.9rem; color: #fca5a5;">
-            Recursos disponibles iniciales: <strong>${formatVector(result.available)}</strong>.
-            Los procesos <strong>${blockedNames}</strong> no pueden finalizar con los recursos disponibles.
-          </p>
-        `;
-        result.steps.forEach((st, idx) => {
-          const div = document.createElement('div');
-          div.className = 'step-item';
-          div.innerHTML = `
-            <strong>Paso ${idx + 1} (${getProcessName(st.proc)}):</strong>
-            Finaliza y libera ${formatVector(st.released)} &rarr; Disponibles: <strong>${formatVector(st.afterWork)}</strong>.
-          `;
-          stepsLog.appendChild(div);
-        });
-        const failDiv = document.createElement('div');
-        failDiv.className = 'step-item step-fail';
-        failDiv.innerHTML = `<strong>Interbloqueo:</strong> Ninguno de los procesos restantes (${blockedNames}) puede cubrir sus necesidades para finalizar.`;
-        stepsLog.appendChild(failDiv);
-      }
-    }
-
-    function evaluateAdditionalRequest(applyPermanently = false) {
-      const procIdx = parseInt(document.getElementById('reqProcess').value, 10);
-      const req = [...state.reqVector];
-      const box = document.getElementById('reqResultBox');
-
-      const baseResult = runBankerAlgorithm(state.alloc, state.max, state.totalResources);
-      if (!baseResult.valid) {
-        box.innerHTML = `<span style="color:#f87171;">Corrige primero los excesos de recursos en las tablas antes de simular una solicitud.</span>`;
-        return;
-      }
-
-      for (let j = 0; j < state.numResources; j++) {
-        if (req[j] > baseResult.need[procIdx][j]) {
-          box.innerHTML = `
-            <strong style="color:#f87171;">No es posible concederlo (Excede su necesidad máxima):</strong><br/>
-            ${getProcessName(procIdx)} solicita ${formatVector(req)}, pero su necesidad restante del recurso ${getResourceName(j)} es ${baseResult.need[procIdx][j]}. Superaría su máximo declarado.
-          `;
-          return;
-        }
-      }
-
-      for (let j = 0; j < state.numResources; j++) {
-        if (req[j] > baseResult.available[j]) {
-          box.innerHTML = `
-            <strong style="color:#fbbf24;">No se puede conceder ahora (Recursos insuficientes):</strong><br/>
-            ${getProcessName(procIdx)} solicita ${req[j]} de ${getResourceName(j)}, pero solo hay ${baseResult.available[j]} disponible(s).
-          `;
-          return;
-        }
-      }
-
-      const tempAlloc = state.alloc.map((row, i) =>
-        i === procIdx ? row.map((val, j) => val + req[j]) : [...row]
-      );
-
-      if (applyPermanently) {
-        state.alloc = tempAlloc;
-        buildStructure();
-      }
-
-      const simResult = runBankerAlgorithm(tempAlloc, state.max, state.totalResources);
-      if (simResult.safe) {
-        const seqStr = simResult.sequence.map(i => getProcessName(i)).join(' → ');
-        box.innerHTML = `
-          <strong style="color:#4ade80;">SÍ es seguro conceder la petición a ${getProcessName(procIdx)} ${formatVector(req)}:</strong><br/>
-          Quedarían disponibles ${formatVector(simResult.available)} y el sistema seguiría en estado seguro con la secuencia: <strong>${seqStr}</strong>.
-        `;
-      } else {
-        const blocked = simResult.unfinished.map(i => getProcessName(i)).join(', ');
-        box.innerHTML = `
-          <strong style="color:#f87171;">NO es seguro conceder la petición a ${getProcessName(procIdx)} ${formatVector(req)}:</strong><br/>
-          Los recursos disponibles bajarían a ${formatVector(simResult.available)}, dejando bloqueados a: <strong>${blocked}</strong>.
-        `;
       }
     }
 
@@ -1175,15 +835,11 @@
     document.getElementById('startIndex').addEventListener('change', applyConfigDimensions);
 
     document.getElementById('btnReset').addEventListener('click', () => {
-      state.totalResources = new Array(state.numResources).fill(0);
-      state.alloc = Array.from({ length: state.numProcesses }, () => new Array(state.numResources).fill(0));
-      state.max = Array.from({ length: state.numProcesses }, () => new Array(state.numResources).fill(0));
-      state.reqVector = new Array(state.numResources).fill(0);
+      state.totalResources = new Array(state.numResources).fill(null);
+      state.alloc = Array.from({ length: state.numProcesses }, () => new Array(state.numResources).fill(null));
+      state.max = Array.from({ length: state.numProcesses }, () => new Array(state.numResources).fill(null));
       buildStructure();
     });
-
-    document.getElementById('btnTestRequest').addEventListener('click', () => evaluateAdditionalRequest(false));
-    document.getElementById('btnApplyRequest').addEventListener('click', () => evaluateAdditionalRequest(true));
 
     buildStructure();
   </script>
