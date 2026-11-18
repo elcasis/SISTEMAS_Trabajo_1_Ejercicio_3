@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador del Algoritmo del Banquero</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-alt: #334155;
+      --border: #475569;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --success: #22c55e;
+      --success-bg: rgba(34, 197, 94, 0.14);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.16);
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.18);
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 2rem 1.5rem;
+    }
+
+    .container {
+      max-width: 1380px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--surface-alt);
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #082f49;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: var(--surface-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: #475569;
+    }
+
+    /* Panel de Configuración */
+    .config-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-alt);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .config-section h2 {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.85rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .field label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    input[type="number"], select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.45rem 0.6rem;
+      font-size: 0.95rem;
+      width: 85px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    input[type="number"]:focus, select:focus {
+      outline: 2px solid var(--primary);
+      border-color: transparent;
+    }
+
+    .resources-capacities {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .cap-badge {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      min-width: 84px;
+    }
+
+    .cap-badge span.res-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .cap-badge input {
+      width: 64px;
+      padding: 0.3rem;
+    }
+
+    .cap-badge .avail-pill {
+      font-size: 0.75rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 99px;
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .cap-badge.exceeded {
+      border-color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    .cap-badge.exceeded .avail-pill {
+      background: var(--danger);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* Leyenda de Colores */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      background: rgba(30, 41, 59, 0.6);
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--surface-alt);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .swatch-ok { background: var(--success-bg); border: 1px solid var(--success); }
+    .swatch-warn { background: var(--warning-bg); border: 1px solid var(--warning); }
+    .swatch-err { background: var(--danger-bg); border: 1px solid var(--danger); }
+
+    /* Tres Recuadros Uno al Lado del Otro */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+      align-items: stretch;
+    }
+
+    @media (max-width: 1080px) {
+      .tables-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .table-box {
+      background: var(--surface);
+      border: 1px solid var(--surface-alt);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+    }
+
+    .table-box-header {
+      background: #090d16;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--surface-alt);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .table-box-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .table-box-header span.subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: var(--surface-alt);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      flex: 1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+
+    th, td {
+      padding: 0.6rem 0.5rem;
+      border-bottom: 1px solid var(--surface-alt);
+      border-right: 1px solid rgba(71, 85, 105, 0.35);
+    }
+
+    th:last-child, td:last-child {
+      border-right: none;
+    }
+
+    thead th {
+      background: #162032;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .proc-label {
+      font-weight: 700;
+      color: var(--text);
+      background: rgba(15, 23, 42, 0.45);
+      width: 68px;
+      font-size: 0.9rem;
+    }
+
+    td input[type="number"] {
+      width: 62px;
+      padding: 0.35rem;
+      font-size: 0.92rem;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+
+    td.need-cell {
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    tfoot td {
+      background: #131c2e;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border-top: 2px solid var(--border);
+    }
+
+    /* Códigos de color cuando excede recursos o estados de celda */
+    .cell-danger,
+    td.cell-danger input {
+      background-color: var(--danger-bg) !important;
+      border-color: var(--danger) !important;
+      color: #fca5a5 !important;
+    }
+
+    .cell-warning,
+    td.cell-warning input {
+      background-color: var(--warning-bg) !important;
+      border-color: var(--warning) !important;
+      color: #fcd34d !important;
+    }
+
+    .cell-ready {
+      background-color: var(--success-bg);
+      color: #86efac;
+    }
+
+    .error-banner {
+      background: var(--danger-bg);
+      border: 1px solid var(--danger);
+      color: #fecaca;
+      padding: 0.85rem 1.1rem;
+      border-radius: var(--radius);
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .error-banner.active {
+      display: block;
+    }
+
+    .error-banner ul {
+      margin-top: 0.35rem;
+      margin-left: 1.25rem;
+    }
+
+    /* Resultados y Simulador de Peticiones */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 960px) {
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--surface-alt);
+      border-radius: var(--radius);
+      padding: 1.35rem;
+    }
+
+    .panel h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .status-badge {
+      font-size: 0.82rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 99px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .status-safe {
+      background: var(--success-bg);
+      color: #4ade80;
+      border: 1px solid var(--success);
+    }
+
+    .status-unsafe {
+      background: var(--danger-bg);
+      color: #f87171;
+      border: 1px solid var(--danger);
+    }
+
+    .sequence-flow {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.85rem 0 1.15rem;
+    }
+
+    .seq-node {
+      background: var(--bg);
+      border: 1px solid var(--success);
+      color: #4ade80;
+      font-weight: 700;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .seq-arrow {
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .steps-log {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      max-height: 290px;
+      overflow-y: auto;
+      padding-right: 0.3rem;
+    }
+
+    .step-item {
+      background: var(--bg);
+      border-left: 3px solid var(--primary);
+      padding: 0.6rem 0.85rem;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.86rem;
+    }
+
+    .step-item.step-fail {
+      border-left-color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    .req-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: flex-end;
+      margin-bottom: 1rem;
+    }
+
+    .req-result {
+      margin-top: 1rem;
+      padding: 0.9rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .preset-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .preset-btn {
+      font-size: 0.78rem;
+      padding: 0.35rem 0.65rem;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 6px;
+    }
+    .preset-btn:hover {
+      background: rgba(56, 189, 248, 0.24);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>3. Algoritmo del Banquero</h1>
+        <p>Calculadora interactiva de recursos asociados, máximos, cálculo de finalización y estado seguro</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn-primary" id="btnLoadExercise" title="Carga los datos exactos de la Tabla 2 del ejercicio">
+          Cargar datos del Ejercicio (Tabla 2)
+        </button>
+        <button class="btn-secondary" id="btnClear">
+          Poner a cero
+        </button>
+      </div>
+    </header>
+
+    <!-- Configuración del Sistema -->
+    <section class="config-card">
+      <div class="config-section">
+        <h2>1. Dimensiones del Sistema</h2>
+        <div class="form-row">
+          <div class="field">
+            <label for="numResources">N.º Tipos Recursos (A, B, C...)</label>
+            <input type="number" id="numResources" min="1" max="10" value="3" />
+          </div>
+          <div class="field">
+            <label for="numProcesses">N.º de Procesos</label>
+            <input type="number" id="numProcesses" min="1" max="12" value="4" />
+          </div>
+          <div class="field">
+            <label for="startIndex">Nomenclatura</label>
+            <select id="startIndex" style="width: 115px;">
+              <option value="0" selected>P0, P1, P2...</option>
+              <option value="1">P1, P2, P3...</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h2>2. Unidades Totales del Sistema y Disponibles</h2>
+        <div class="resources-capacities" id="capacitiesContainer"></div>
+      </div>
+    </section>
+
+    <!-- Leyenda de Código de Colores -->
+    <div class="legend">
+      <strong>Código de colores:</strong>
+      <span class="legend-item">
+        <span class="swatch swatch-err"></span>
+        <strong>Rojo (Exceso del sistema):</strong> La suma asignada supera el total del sistema, un proceso pide un máximo mayor al total del sistema, o Asignado &gt; Máximo.
+      </span>
+      <span class="legend-item">
+        <span class="swatch swatch-warn"></span>
+        <strong>Ámbar (Espera):</strong> La necesidad actual supera los recursos disponibles libres en este instante.
+      </span>
+      <span class="legend-item">
+        <span class="swatch swatch-ok"></span>
+        <strong>Verde (Ejecutable):</strong> Necesidad &le; Disponibles (el proceso puede finalizar inmediatamente).
+      </span>
+    </div>
+
+    <!-- Banner de Alertas de Exceso -->
+    <div id="errorBanner" class="error-banner"></div>
+
+    <!-- Tres Recuadros Uno al Lado del Otro -->
+    <section class="tables-grid">
+      <!-- Recuadro 1: Recursos Asociados -->
+      <div class="table-box">
+        <div class="table-box-header">
+          <h3>1. Recursos Asociados</h3>
+          <span class="subtitle">Asignación Actual</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="tableAlloc"></table>
+        </div>
+      </div>
+
+      <!-- Recuadro 2: Recursos Máximos -->
+      <div class="table-box">
+        <div class="table-box-header">
+          <h3>2. Recursos Máximos</h3>
+          <span class="subtitle">Demanda Máxima</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="tableMax"></table>
+        </div>
+      </div>
+
+      <!-- Recuadro 3: Cálculo de Finalización -->
+      <div class="table-box">
+        <div class="table-box-header">
+          <h3>3. Cálculo de Finalización</h3>
+          <span class="subtitle">Necesidad = Máximos − Asociados</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="tableNeed"></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Evaluación de Estado Seguro y Peticiones Adicionales -->
+    <section class="bottom-grid">
+      <div class="panel">
+        <h3>
+          <span>Análisis de Estado Seguro</span>
+          <span id="safetyBadge" class="status-badge">Calculando...</span>
+        </h3>
+        <div id="safetySummary"></div>
+        <div id="sequenceContainer" class="sequence-flow"></div>
+        <div id="stepsLog" class="steps-log"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Simulador de Petición Adicional</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.9rem;">
+          Comprueba si conceder unidades adicionales a un proceso mantiene al sistema en un <strong>estado seguro</strong>.
+        </p>
+
+        <div class="req-controls">
+          <div class="field">
+            <label for="reqProcess">Proceso</label>
+            <select id="reqProcess" style="width: 90px;"></select>
+          </div>
+          <div id="reqInputsContainer" class="form-row"></div>
+          <button class="btn-primary" id="btnTestRequest">Evaluar Petición</button>
+          <button class="btn-secondary" id="btnApplyRequest" title="Suma esta petición a la tabla de Recursos Asociados">Aplicar en tabla</button>
+        </div>
+
+        <div class="preset-pills">
+          <button class="preset-btn" id="btnPresetP2A">
+            Pregunta 3: P2 solicita +1 de A
+          </button>
+          <button class="preset-btn" id="btnPresetP1C">
+            Pregunta 4: P1 solicita +2 de C
+          </button>
+        </div>
+
+        <div id="reqResultBox" class="req-result">
+          Selecciona un proceso o pulsa uno de los botones de las preguntas del ejercicio para verificar la solicitud.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      numResources: 3,
+      numProcesses: 4,
+      startIndex: 0,
+      totalResources: [9, 8, 7],
+      alloc: [
+        [0, 4, 2],
+        [3, 0, 1],
+        [3, 1, 0],
+        [2, 0, 2]
+      ],
+      max: [
+        [4, 4, 3],
+        [3, 5, 2],
+        [5, 2, 3],
+        [2, 1, 3]
+      ],
+      reqVector: [0, 0, 0]
+    };
+
+    function getResourceName(index) {
+      return String.fromCharCode(65 + index);
+    }
+
+    function getProcessName(index) {
+      return `P${index + state.startIndex}`;
+    }
+
+    function syncDimensions() {
+      while (state.totalResources.length < state.numResources) state.totalResources.push(5);
+      state.totalResources.length = state.numResources;
+
+      while (state.reqVector.length < state.numResources) state.reqVector.push(0);
+      state.reqVector.length = state.numResources;
+
+      while (state.alloc.length < state.numProcesses) {
+        state.alloc.push(new Array(state.numResources).fill(0));
+      }
+      state.alloc.length = state.numProcesses;
+
+      while (state.max.length < state.numProcesses) {
+        state.max.push(new Array(state.numResources).fill(0));
+      }
+      state.max.length = state.numProcesses;
+
+      for (let i = 0; i < state.numProcesses; i++) {
+        while (state.alloc[i].length < state.numResources) state.alloc[i].push(0);
+        state.alloc[i].length = state.numResources;
+        while (state.max[i].length < state.numResources) state.max[i].push(0);
+        state.max[i].length = state.numResources;
+      }
+    }
+
+    function buildStructure() {
+      syncDimensions();
+
+      const capContainer = document.getElementById('capacitiesContainer');
+      capContainer.innerHTML = '';
+      for (let j = 0; j < state.numResources; j++) {
+        const resName = getResourceName(j);
+        const badge = document.createElement('div');
+        badge.className = 'cap-badge';
+        badge.id = `cap-badge-${j}`;
+        badge.innerHTML = `
+          <span class="res-title">Recurso ${resName}</span>
+          <input type="number" min="0" value="${state.totalResources[j]}" data-res="${j}" class="input-total" />
+          <span class="avail-pill" id="avail-pill-${j}">Disp: 0</span>
+        `;
+        capContainer.appendChild(badge);
+      }
+
+      document.querySelectorAll('.input-total').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const j = parseInt(e.target.dataset.res, 10);
+          state.totalResources[j] = Math.max(0, parseInt(e.target.value, 10) || 0);
+          recalculateAndHighlight();
+        });
+      });
+
+      const tableAlloc = document.getElementById('tableAlloc');
+      const tableMax = document.getElementById('tableMax');
+      const tableNeed = document.getElementById('tableNeed');
+
+      let headerCols = '<th>Proceso</th>';
+      for (let j = 0; j < state.numResources; j++) {
+        headerCols += `<th>${getResourceName(j)}</th>`;
+      }
+
+      let allocBody = '';
+      for (let i = 0; i < state.numProcesses; i++) {
+        allocBody += `<tr><td class="proc-label" data-proc-label="${i}">${getProcessName(i)}</td>`;
+        for (let j = 0; j < state.numResources; j++) {
+          allocBody += `<td id="alloc-cell-${i}-${j}">
+            <input type="number" min="0" value="${state.alloc[i][j]}" data-proc="${i}" data-res="${j}" class="input-alloc" />
+          </td>`;
+        }
+        allocBody += '</tr>';
+      }
+      let allocFoot = '<tfoot><tr><td>Total Asig.</td>';
+      for (let j = 0; j < state.numResources; j++) {
+        allocFoot += `<td id="sum-alloc-${j}">0</td>`;
+      }
+      allocFoot += '</tr><tr><td>Disponibles</td>';
+      for (let j = 0; j < state.numResources; j++) {
+        allocFoot += `<td id="foot-avail-${j}">0</td>`;
+      }
+      allocFoot += '</tr></tfoot>';
+      tableAlloc.innerHTML = `<thead><tr>${headerCols}</tr></thead><tbody>${allocBody}</tbody>${allocFoot}`;
+
+      let maxBody = '';
+      for (let i = 0; i < state.numProcesses; i++) {
+        maxBody += `<tr><td class="proc-label" data-proc-label="${i}">${getProcessName(i)}</td>`;
+        for (let j = 0; j < state.numResources; j++) {
+          maxBody += `<td id="max-cell-${i}-${j}">
+            <input type="number" min="0" value="${state.max[i][j]}" data-proc="${i}" data-res="${j}" class="input-max" />
+          </td>`;
+        }
+        maxBody += '</tr>';
+      }
+      let maxFoot = '<tfoot><tr><td>Límite Sistema</td>';
+      for (let j = 0; j < state.numResources; j++) {
+        maxFoot += `<td id="foot-sys-${j}">${state.totalResources[j]}</td>`;
+      }
+      maxFoot += '</tr></tfoot>';
+      tableMax.innerHTML = `<thead><tr>${headerCols}</tr></thead><tbody>${maxBody}</tbody>${maxFoot}`;
+
+      let needHeader = headerCols + '<th>Estado</th>';
+      let needBody = '';
+      for (let i = 0; i < state.numProcesses; i++) {
+        needBody += `<tr id="need-row-${i}"><td class="proc-label" data-proc-label="${i}">${getProcessName(i)}</td>`;
+        for (let j = 0; j < state.numResources; j++) {
+          needBody += `<td class="need-cell" id="need-cell-${i}-${j}">0</td>`;
+        }
+        needBody += `<td id="need-status-${i}" style="font-size: 0.78rem; font-weight: 700;"></td></tr>`;
+      }
+      tableNeed.innerHTML = `<thead><tr>${needHeader}</tr></thead><tbody>${needBody}</tbody>`;
+
+      document.querySelectorAll('.input-alloc').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const i = parseInt(e.target.dataset.proc, 10);
+          const j = parseInt(e.target.dataset.res, 10);
+          state.alloc[i][j] = Math.max(0, parseInt(e.target.value, 10) || 0);
+          recalculateAndHighlight();
+        });
+      });
+
+      document.querySelectorAll('.input-max').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const i = parseInt(e.target.dataset.proc, 10);
+          const j = parseInt(e.target.dataset.res, 10);
+          state.max[i][j] = Math.max(0, parseInt(e.target.value, 10) || 0);
+          recalculateAndHighlight();
+        });
+      });
+
+      const reqSelect = document.getElementById('reqProcess');
+      const prevSelected = parseInt(reqSelect.value, 10) || 0;
+      reqSelect.innerHTML = '';
+      for (let i = 0; i < state.numProcesses; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = getProcessName(i);
+        reqSelect.appendChild(opt);
+      }
+      reqSelect.value = prevSelected < state.numProcesses ? prevSelected : 0;
+
+      const reqInputsContainer = document.getElementById('reqInputsContainer');
+      reqInputsContainer.innerHTML = '';
+      for (let j = 0; j < state.numResources; j++) {
+        const f = document.createElement('div');
+        f.className = 'field';
+        f.innerHTML = `
+          <label>+ ${getResourceName(j)}</label>
+          <input type="number" min="0" value="${state.reqVector[j]}" data-req-res="${j}" class="input-req" style="width: 65px;" />
+        `;
+        reqInputsContainer.appendChild(f);
+      }
+
+      document.querySelectorAll('.input-req').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const j = parseInt(e.target.dataset.reqRes, 10);
+          state.reqVector[j] = Math.max(0, parseInt(e.target.value, 10) || 0);
+        });
+      });
+
+      recalculateAndHighlight();
+    }
+
+    function runBankerAlgorithm(allocMatrix, maxMatrix, totalVector) {
+      const n = allocMatrix.length;
+      const m = totalVector.length;
+
+      const sumAlloc = new Array(m).fill(0);
+      for (let j = 0; j < m; j++) {
+        for (let i = 0; i < n; i++) {
+          sumAlloc[j] += allocMatrix[i][j];
+        }
+      }
+
+      const available = totalVector.map((tot, j) => tot - sumAlloc[j]);
+      const need = Array.from({ length: n }, (_, i) =>
+        Array.from({ length: m }, (__, j) => maxMatrix[i][j] - allocMatrix[i][j])
+      );
+
+      const errors = [];
+      for (let j = 0; j < m; j++) {
+        if (sumAlloc[j] > totalVector[j]) {
+          errors.push(`La suma de recursos asociados de tipo ${getResourceName(j)} (${sumAlloc[j]}) excede los recursos totales del sistema (${totalVector[j]}).`);
+        }
+      }
+
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < m; j++) {
+          if (maxMatrix[i][j] > totalVector[j]) {
+            errors.push(`El proceso ${getProcessName(i)} declara un recurso máximo de ${getResourceName(j)} (${maxMatrix[i][j]}) que excede el total del sistema (${totalVector[j]}).`);
+          }
+          if (allocMatrix[i][j] > maxMatrix[i][j]) {
+            errors.push(`El proceso ${getProcessName(i)} tiene más recursos asociados de ${getResourceName(j)} (${allocMatrix[i][j]}) que su máximo declarado (${maxMatrix[i][j]}).`);
+          }
+        }
+      }
+
+      if (errors.length > 0) {
+        return {
+          valid: false,
+          safe: false,
+          errors,
+          sumAlloc,
+          available,
+          need,
+          sequence: [],
+          steps: []
+        };
+      }
+
+      const work = [...available];
+      const finish = new Array(n).fill(false);
+      const sequence = [];
+      const steps = [];
+
+      let progress = true;
+      while (sequence.length < n && progress) {
+        progress = false;
+        for (let i = 0; i < n; i++) {
+          if (!finish[i]) {
+            const canRun = need[i].every((val, j) => val <= work[j]);
+            if (canRun) {
+              const beforeWork = [...work];
+              for (let j = 0; j < m; j++) {
+                work[j] += allocMatrix[i][j];
+              }
+              finish[i] = true;
+              sequence.push(i);
+              steps.push({
+                proc: i,
+                need: [...need[i]],
+                beforeWork,
+                released: [...allocMatrix[i]],
+                afterWork: [...work]
+              });
+              progress = true;
+            }
+          }
+        }
+      }
+
+      const safe = sequence.length === n;
+      return {
+        valid: true,
+        safe,
+        errors: [],
+        sumAlloc,
+        available,
+        need,
+        sequence,
+        steps,
+        unfinished: finish.map((f, idx) => (!f ? idx : null)).filter(x => x !== null)
+      };
+    }
+
+    function recalculateAndHighlight() {
+      document.querySelectorAll('[data-proc-label]').forEach(el => {
+        const idx = parseInt(el.dataset.procLabel, 10);
+        el.textContent = getProcessName(idx);
+      });
+
+      const result = runBankerAlgorithm(state.alloc, state.max, state.totalResources);
+
+      for (let j = 0; j < state.numResources; j++) {
+        const availVal = result.available[j];
+        const sumVal = result.sumAlloc[j];
+        const totVal = state.totalResources[j];
+
+        const badge = document.getElementById(`cap-badge-${j}`);
+        const pill = document.getElementById(`avail-pill-${j}`);
+        const sumTd = document.getElementById(`sum-alloc-${j}`);
+        const availTd = document.getElementById(`foot-avail-${j}`);
+        const sysTd = document.getElementById(`foot-sys-${j}`);
+
+        pill.textContent = `Disp: ${availVal}`;
+        sumTd.textContent = `${sumVal} / ${totVal}`;
+        availTd.textContent = availVal;
+        sysTd.textContent = totVal;
+
+        const columnExceeded = sumVal > totVal;
+        badge.classList.toggle('exceeded', columnExceeded);
+        sumTd.classList.toggle('cell-danger', columnExceeded);
+        availTd.classList.toggle('cell-danger', availVal < 0);
+      }
+
+      for (let i = 0; i < state.numProcesses; i++) {
+        let rowHasSystemExceed = false;
+        let rowCanRunNow = true;
+
+        for (let j = 0; j < state.numResources; j++) {
+          const allocVal = state.alloc[i][j];
+          const maxVal = state.max[i][j];
+          const needVal = result.need[i][j];
+          const totVal = state.totalResources[j];
+          const availVal = result.available[j];
+
+          const allocCell = document.getElementById(`alloc-cell-${i}-${j}`);
+          const maxCell = document.getElementById(`max-cell-${i}-${j}`);
+          const needCell = document.getElementById(`need-cell-${i}-${j}`);
+
+          needCell.textContent = needVal;
+
+          allocCell.className = '';
+          maxCell.className = '';
+          needCell.className = 'need-cell';
+
+          const allocExceedsSys = allocVal > totVal || result.sumAlloc[j] > totVal;
+          const allocExceedsMax = allocVal > maxVal;
+          const maxExceedsSys = maxVal > totVal;
+
+          if (allocExceedsSys || allocExceedsMax) {
+            allocCell.classList.add('cell-danger');
+            rowHasSystemExceed = true;
+          }
+          if (maxExceedsSys || allocExceedsMax) {
+            maxCell.classList.add('cell-danger');
+            rowHasSystemExceed = true;
+          }
+
+          if (needVal < 0 || maxExceedsSys || needVal > totVal) {
+            needCell.classList.add('cell-danger');
+            rowHasSystemExceed = true;
+            rowCanRunNow = false;
+          } else if (needVal > availVal) {
+            needCell.classList.add('cell-warning');
+            rowCanRunNow = false;
+          } else {
+            needCell.classList.add('cell-ready');
+          }
+        }
+
+        const statusCell = document.getElementById(`need-status-${i}`);
+        if (rowHasSystemExceed) {
+          statusCell.textContent = 'EXCEDE SISTEMA';
+          statusCell.style.color = '#f87171';
+        } else if (rowCanRunNow) {
+          statusCell.textContent = 'Puede finalizar';
+          statusCell.style.color = '#4ade80';
+        } else {
+          statusCell.textContent = 'En espera';
+          statusCell.style.color = '#fbbf24';
+        }
+      }
+
+      const errorBanner = document.getElementById('errorBanner');
+      if (!result.valid) {
+        errorBanner.classList.add('active');
+        errorBanner.innerHTML = `
+          <strong>¡Alerta! Exceso de recursos detectado:</strong>
+          <ul>${result.errors.map(e => `<li>${e}</li>`).join('')}</ul>
+        `;
+      } else {
+        errorBanner.classList.remove('active');
+        errorBanner.innerHTML = '';
+      }
+
+      renderSafetyPanel(result);
+    }
+
+    function formatVector(vec) {
+      return `(${vec.map((v, j) => `${getResourceName(j)}=${v}`).join(', ')})`;
+    }
+
+    function renderSafetyPanel(result) {
+      const badge = document.getElementById('safetyBadge');
+      const summary = document.getElementById('safetySummary');
+      const seqContainer = document.getElementById('sequenceContainer');
+      const stepsLog = document.getElementById('stepsLog');
+
+      seqContainer.innerHTML = '';
+      stepsLog.innerHTML = '';
+
+      if (!result.valid) {
+        badge.className = 'status-badge status-unsafe';
+        badge.textContent = 'Estado Inválido (Exceso)';
+        summary.innerHTML = `<p style="color: #fca5a5; font-size: 0.9rem;">No es posible estar en estado seguro porque se superan las unidades existentes en el sistema.</p>`;
+        return;
+      }
+
+      if (result.safe) {
+        badge.className = 'status-badge status-safe';
+        badge.textContent = 'Estado Seguro';
+        summary.innerHTML = `
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Recursos disponibles iniciales: <strong style="color: var(--text);">${formatVector(result.available)}</strong>.
+            Existe al menos una secuencia segura en la que todos los procesos finalizan:
+          </p>
+        `;
+
+        result.sequence.forEach((procIdx, idx) => {
+          const node = document.createElement('span');
+          node.className = 'seq-node';
+          node.textContent = getProcessName(procIdx);
+          seqContainer.appendChild(node);
+          if (idx < result.sequence.length - 1) {
+            const arrow = document.createElement('span');
+            arrow.className = 'seq-arrow';
+            arrow.textContent = '→';
+            seqContainer.appendChild(arrow);
+          }
+        });
+
+        result.steps.forEach((st, idx) => {
+          const div = document.createElement('div');
+          div.className = 'step-item';
+          div.innerHTML = `
+            <strong>Paso ${idx + 1} (${getProcessName(st.proc)}):</strong>
+            Necesita ${formatVector(st.need)} &le; Disponibles ${formatVector(st.beforeWork)}.
+            Finaliza y libera ${formatVector(st.released)} &rarr; Nuevos disponibles: <strong>${formatVector(st.afterWork)}</strong>.
+          `;
+          stepsLog.appendChild(div);
+        });
+      } else {
+        badge.className = 'status-badge status-unsafe';
+        badge.textContent = 'Estado NO Seguro (Interbloqueo)';
+        const blockedNames = result.unfinished.map(i => getProcessName(i)).join(', ');
+        summary.innerHTML = `
+          <p style="font-size: 0.9rem; color: #fca5a5;">
+            Recursos disponibles iniciales: <strong>${formatVector(result.available)}</strong>.
+            Los procesos <strong>${blockedNames}</strong> no disponen de recursos suficientes para finalizar.
+          </p>
+        `;
+        result.steps.forEach((st, idx) => {
+          const div = document.createElement('div');
+          div.className = 'step-item';
+          div.innerHTML = `
+            <strong>Paso ${idx + 1} (${getProcessName(st.proc)}):</strong>
+            Pudo finalizar liberando ${formatVector(st.released)} &rarr; Disponibles: <strong>${formatVector(st.afterWork)}</strong>.
+          `;
+          stepsLog.appendChild(div);
+        });
+        const failDiv = document.createElement('div');
+        failDiv.className = 'step-item step-fail';
+        failDiv.innerHTML = `<strong>Bloqueo:</strong> Ninguno de los procesos pendientes (${blockedNames}) puede cubrir su necesidad con los recursos disponibles actuales.`;
+        stepsLog.appendChild(failDiv);
+      }
+    }
+
+    function evaluateAdditionalRequest(applyPermanently = false) {
+      const procIdx = parseInt(document.getElementById('reqProcess').value, 10);
+      const req = [...state.reqVector];
+      const box = document.getElementById('reqResultBox');
+
+      const baseResult = runBankerAlgorithm(state.alloc, state.max, state.totalResources);
+      if (!baseResult.valid) {
+        box.innerHTML = `<span style="color:#f87171;">Corrige primero los excesos de recursos en las tablas antes de simular una solicitud.</span>`;
+        return;
+      }
+
+      for (let j = 0; j < state.numResources; j++) {
+        if (req[j] > baseResult.need[procIdx][j]) {
+          box.innerHTML = `
+            <strong style="color:#f87171;">Petición Denegada (Excede Máximo Declarado):</strong><br/>
+            ${getProcessName(procIdx)} solicita ${formatVector(req)}, pero su necesidad restante para ${getResourceName(j)} es solo de ${baseResult.need[procIdx][j]}.
+          `;
+          return;
+        }
+      }
+
+      for (let j = 0; j < state.numResources; j++) {
+        if (req[j] > baseResult.available[j]) {
+          box.innerHTML = `
+            <strong style="color:#fbbf24;">No se puede conceder ahora (Faltan Recursos Disponibles):</strong><br/>
+            ${getProcessName(procIdx)} solicita ${req[j]} de ${getResourceName(j)}, pero actualmente solo hay ${baseResult.available[j]} disponible(s). El proceso debe esperar.
+          `;
+          return;
+        }
+      }
+
+      const tempAlloc = state.alloc.map((row, i) =>
+        i === procIdx ? row.map((val, j) => val + req[j]) : [...row]
+      );
+
+      if (applyPermanently) {
+        state.alloc = tempAlloc;
+        buildStructure();
+      }
+
+      const simResult = runBankerAlgorithm(tempAlloc, state.max, state.totalResources);
+      if (simResult.safe) {
+        const seqStr = simResult.sequence.map(i => getProcessName(i)).join(' → ');
+        box.innerHTML = `
+          <strong style="color:#4ade80;">SÍ es seguro conceder la petición a ${getProcessName(procIdx)} ${formatVector(req)}:</strong><br/>
+          Tras asignarlos, quedan disponibles ${formatVector(simResult.available)} y el sistema mantiene una secuencia segura: <strong>${seqStr}</strong>.
+        `;
+      } else {
+        const blocked = simResult.unfinished.map(i => getProcessName(i)).join(', ');
+        box.innerHTML = `
+          <strong style="color:#f87171;">NO es seguro conceder la petición a ${getProcessName(procIdx)} ${formatVector(req)}:</strong><br/>
+          Tras asignarlos, los recursos disponibles pasarían a ser ${formatVector(simResult.available)}, lo que dejaría sin poder finalizar a: <strong>${blocked}</strong> (posible interbloqueo).
+        `;
+      }
+    }
+
+    function loadExercisePreset() {
+      state.numResources = 3;
+      state.numProcesses = 4;
+      state.startIndex = 0;
+      state.totalResources = [9, 8, 7];
+      state.alloc = [
+        [0, 4, 2],
+        [3, 0, 1],
+        [3, 1, 0],
+        [2, 0, 2]
+      ];
+      state.max = [
+        [4, 4, 3],
+        [3, 5, 2],
+        [5, 2, 3],
+        [2, 1, 3]
+      ];
+      state.reqVector = [0, 0, 0];
+
+      document.getElementById('numResources').value = 3;
+      document.getElementById('numProcesses').value = 4;
+      document.getElementById('startIndex').value = '0';
+      buildStructure();
+    }
+
+    document.getElementById('numResources').addEventListener('change', (e) => {
+      const val = Math.min(10, Math.max(1, parseInt(e.target.value, 10) || 1));
+      e.target.value = val;
+      state.numResources = val;
+      buildStructure();
+    });
+
+    document.getElementById('numProcesses').addEventListener('change', (e) => {
+      const val = Math.min(12, Math.max(1, parseInt(e.target.value, 10) || 1));
+      e.target.value = val;
+      state.numProcesses = val;
+      buildStructure();
+    });
+
+    document.getElementById('startIndex').addEventListener('change', (e) => {
+      state.startIndex = parseInt(e.target.value, 10);
+      buildStructure();
+    });
+
+    document.getElementById('btnLoadExercise').addEventListener('click', loadExercisePreset);
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      state.alloc = Array.from({ length: state.numProcesses }, () => new Array(state.numResources).fill(0));
+      state.max = Array.from({ length: state.numProcesses }, () => new Array(state.numResources).fill(0));
+      buildStructure();
+    });
+
+    document.getElementById('btnTestRequest').addEventListener('click', () => evaluateAdditionalRequest(false));
+    document.getElementById('btnApplyRequest').addEventListener('click', () => evaluateAdditionalRequest(true));
+
+    document.getElementById('btnPresetP2A').addEventListener('click', () => {
+      loadExercisePreset();
+      document.getElementById('reqProcess').value = 2;
+      state.reqVector = [1, 0, 0];
+      document.querySelectorAll('.input-req').forEach((inp, j) => {
+        inp.value = state.reqVector[j] || 0;
+      });
+      evaluateAdditionalRequest(false);
+    });
+
+    document.getElementById('btnPresetP1C').addEventListener('click', () => {
+      loadExercisePreset();
+      document.getElementById('reqProcess').value = 1;
+      state.reqVector = [0, 0, 2];
+      document.querySelectorAll('.input-req').forEach((inp, j) => {
+        inp.value = state.reqVector[j] || 0;
+      });
+      evaluateAdditionalRequest(false);
+    });
+
+    buildStructure();
+  </script>
+</body>
+</html>
